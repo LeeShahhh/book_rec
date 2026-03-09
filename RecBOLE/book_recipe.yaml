@@ -1,0 +1,50 @@
+# 数据集和路径配置
+dataset: book_recipe
+data_path: dataset/
+
+# 字段映射
+USER_ID_FIELD: user_id
+ITEM_ID_FIELD: item_id
+RATING_FIELD: rating
+
+LABEL_FIELD: label 
+TIME_FIELD: ~
+
+load_col:
+  inter: [user_id, item_id, rating] 
+  item: [item_id, class, sub_class, author, publisher, pub_year]
+
+# 1. 过滤掉交互小于 5 的用户和物品（对齐你代码中的 valid_books 和 valid_users）
+user_inter_num_interval: '[5,inf)'
+item_inter_num_interval: '[5,inf)'
+
+# 2. 你的代码中 `ratings > 0` 都是正样本，所以我们取消大于3分的过滤限制
+val_interval: {'rating': '[1,inf)'}
+
+# 3. 负采样策略：你的 get_train_samples 中 neg_ratio=3
+train_neg_sample_args:
+  distribution: uniform
+  sample_num: 3
+
+# 4. 模型超参数设置（完美对齐你的 DSSM 类）
+embedding_size: 64
+mlp_hidden_size: [128, 64]
+
+# 5. 训练和评测设置（对齐你的 DataLoader 和 optimizer设置）
+epochs: 1
+train_batch_size: 256
+eval_batch_size: 2048
+learning_rate: 0.001
+
+# 评测拆分策略
+eval_args:
+  split: {'RS': [0.8, 0.1, 0.1]}  # 你划分了 20% 出去，这里切成 10% 验证 10% 测试
+  group_by: user
+  order: RO
+  mode: full  # 你的 np.dot(u_vectors, book_vectors.T) 就是按 full 排序的
+
+metrics: ['Recall', 'NDCG', 'Hit', 'MRR', 'Precision'] 
+topk: [20]
+valid_metric: Recall@20
+
+encoding: 'utf-8'
